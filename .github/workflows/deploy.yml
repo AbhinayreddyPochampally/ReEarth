@@ -38,12 +38,39 @@ jobs:
           # public/ may be empty at Wave 1 but copy it anyway for later assets
           [ -d web/public ] && cp -r web/public/. web/.next/standalone/public/ || true
 
-      - name: Deploy to Azure App Service
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: reearth
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: web/.next/standalone
+      - name: Deploy to Azure via Kudu zip API
+        env:
+          PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          # Parse ZipDeploy credentials from publish profile XML
+          KUDU_USER=$(python3 -c "
+          import xml.etree.ElementTree as ET, os, sys
+          root = ET.fromstring(os.environ['PUBLISH_PROFILE'].strip())
+          for p in root.findall('publishProfile'):
+              if p.get('publishMethod') == 'ZipDeploy':
+                  print(p.get('userName')); sys.exit(0)
+          sys.exit(1)
+          ")
+          KUDU_PWD=$(python3 -c "
+          import xml.etree.ElementTree as ET, os, sys
+          root = ET.fromstring(os.environ['PUBLISH_PROFILE'].strip())
+          for p in root.findall('publishProfile'):
+              if p.get('publishMethod') == 'ZipDeploy':
+                  print(p.get('userPWD')); sys.exit(0)
+          sys.exit(1)
+          ")
+          echo "Credentials parsed. Creating deploy zip..."
+          cd web/.next/standalone && zip -qr /tmp/deploy.zip . && cd ../../..
+          echo "Uploading to Kudu (this takes ~30s)..."
+          HTTP=$(curl -s -o /tmp/resp.txt -w "%{http_code}" \
+            -X POST "https://reearth.scm.azurewebsites.net/api/zipdeploy" \
+            -u "${KUDU_USER}:${KUDU_PWD}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @/tmp/deploy.zip \
+            --max-time 300)
+          echo "Kudu response: $HTTP"
+          cat /tmp/resp.txt
+          [ "$HTTP" = "200" ] || [ "$HTTP" = "202" ] || exit 1
 
       - name: Smoke test
         run: |
