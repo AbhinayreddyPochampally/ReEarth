@@ -43,15 +43,13 @@ jobs:
           PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         run: |
           # Parse ZipDeploy credentials with regex — robust to whitespace/BOM/extra lines in the secret.
-          # tail -1 defends against the secret containing more than one profile (e.g. paste duplication)
-          ZIP_BLOCK=$(printf '%s' "$PUBLISH_PROFILE" | grep -oP '<publishProfile[^>]*publishMethod="ZipDeploy"[^>]*>' | tail -1 || true)
+          ZIP_BLOCK=$(printf '%s' "$PUBLISH_PROFILE" | grep -oP '<publishProfile[^>]*publishMethod="ZipDeploy"[^>]*>' || true)
           if [ -z "$ZIP_BLOCK" ]; then
             echo "ERROR: ZipDeploy profile not found in PUBLISH_PROFILE secret"
-            echo "Secret length: ${#PUBLISH_PROFILE}"
             exit 1
           fi
-          KUDU_USER=$(printf '%s' "$ZIP_BLOCK" | grep -oP 'userName="\K[^"]+' | tail -1)
-          KUDU_PWD=$(printf '%s' "$ZIP_BLOCK" | grep -oP 'userPWD="\K[^"]+' | tail -1)
+          KUDU_USER=$(printf '%s' "$ZIP_BLOCK" | grep -oP 'userName="\K[^"]+')
+          KUDU_PWD=$(printf '%s' "$ZIP_BLOCK" | grep -oP 'userPWD="\K[^"]+')
           if [ -z "$KUDU_USER" ] || [ -z "$KUDU_PWD" ]; then
             echo "ERROR: Could not extract credentials from ZipDeploy profile"
             exit 1
