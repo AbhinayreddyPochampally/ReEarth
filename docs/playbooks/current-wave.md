@@ -12,7 +12,7 @@ If everything else fails, this URL is the demo.
 
 ### Setup phase
 
-- [ ] **Task 1.0** — Initialize Next.js project in `web/`
+- [x] **Task 1.0** — Initialize Next.js project in `web/`
   - Create with `npx create-next-app@latest web --typescript --tailwind --app --eslint --src-dir=false --import-alias="@/*" --use-npm`
   - Verify `npm run dev` starts a server on localhost:3000
   - Commit as "wave 1.0: scaffold Next.js project"
@@ -105,4 +105,4 @@ When done, copy this file to `docs/playbooks/wave1-complete.md`, then replace it
 
 ## Notes from the architect
 
-(Append notes during the wave)
+2026-04-27 — Session 1: Project scaffolded, CLAUDE.md written, safety hooks added to settings.json, decisions.md populated with four initial architecture decisions. No Wave 1 tasks started yet.
