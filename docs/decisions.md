@@ -272,3 +272,31 @@ Format for each decision:
 
 **Foundation doc reference:** N/A (tooling decision)
 **Reversibility:** Easy. CLI workflow works fine once auth is set up; future migrations follow the README without amendment.
+
+---
+
+## 2026-04-27 — Model tiering for subagents (reverted from all-Opus)
+
+**Context:** The user-level `~/.claude/settings.json` had `"model": "claude-opus-4-7"` set globally, which routed every subagent invocation (planner, reviewer, cost-checker) and the main thread to Opus 4.7. Pro usage was burning fast and the cost-checker (mechanical az CLI parsing) was slower than necessary. The starter-kit intent was tiered: opus only where reasoning leverage justifies it.
+
+**Decision:** Restore tiered model assignment by removing the global override. Effective configuration:
+- `planner` subagent → `model: opus` (in `.claude/agents/planner.md` frontmatter, already set)
+- `reviewer` subagent → `model: sonnet` (in `.claude/agents/reviewer.md` frontmatter, already set)
+- `cost-checker` subagent → `model: haiku` (in `.claude/agents/cost-checker.md` frontmatter, already set)
+- Main thread → no override (uses Claude Code default)
+
+The agent frontmatter was already correct from the starter kit; the bug was the user-level `"model"` override at `~/.claude/settings.json`. That single line was deleted; agent frontmatter is now authoritative.
+
+**Why:**
+1. **Opus on planner is justified** — planning is the highest-leverage step in our architect-developer protocol. The architect reads plans, not code. Plan quality is the constraint on whole-project quality. Opus's stronger reasoning earns its cost here.
+2. **Sonnet on reviewer is sufficient** — code review against conventions in CLAUDE.md is pattern matching. Sonnet handles it well. Opus would be overkill.
+3. **Haiku on cost-checker is the right call** — it runs az consumption commands, parses tabular output, returns structured reports. Mechanical work. Haiku is 25× cheaper and meaningfully faster than Opus for this.
+4. **Defaulting all subagents to Opus 4.7 burned through Claude Pro usage limits unnecessarily** and slowed the cost-checker for no benefit.
+
+**Alternatives considered:**
+- Keep the global override and live with cost: rejected — it was the symptom and removing it costs nothing
+- Add per-project override that beats the user-level: rejected — fixes the symptom in this project only; the user-level override would still affect other projects on the same machine
+- Set explicit `claude-opus-4-7` (vs the alias `opus`) in agent frontmatter: rejected — alias is more durable across version bumps
+
+**Foundation doc reference:** N/A (tooling decision)
+**Reversibility:** Trivial. Re-add `"model": "claude-opus-4-7"` to `~/.claude/settings.json` to restore the all-Opus behavior.
