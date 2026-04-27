@@ -32,9 +32,11 @@ jobs:
 
       - name: Assemble standalone deploy package
         run: |
-          # Next.js standalone output needs public/ and .next/static/ copied in manually.
-          cp -r web/public web/.next/standalone/public
+          # Next.js standalone output needs public/ and .next/static/ copied in.
+          mkdir -p web/.next/standalone/public web/.next/standalone/.next
           cp -r web/.next/static web/.next/standalone/.next/static
+          # public/ may be empty at Wave 1 but copy it anyway for later assets
+          [ -d web/public ] && cp -r web/public/. web/.next/standalone/public/ || true
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
