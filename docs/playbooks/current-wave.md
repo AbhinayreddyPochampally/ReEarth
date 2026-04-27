@@ -29,7 +29,7 @@ If everything else fails, this URL is the demo.
 
 ### Database phase
 
-- [ ] **Task 1.3** — Create database migration: core schema
+- [x] **Task 1.3** — Create database migration: core schema
   - Migration `001_core_schema.sql` in `supabase/migrations/`
   - Tables: `facilities`, `personnel`, `parameters`, `parameter_assignments`, `submissions`, `evidence`, `audit_log`, `discussions`
   - Schema follows foundation Section 8 + Appendix B

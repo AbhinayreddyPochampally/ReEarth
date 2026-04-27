@@ -165,3 +165,110 @@ Format for each decision:
 
 **Foundation doc reference:** Sections 12–15 (auth flow). Foundation doc does not specify RLS posture; this is a Supabase-specific decision.
 **Reversibility:** Easy. Tightening policies later is additive. Loosening is also additive (drop policy, add looser).
+
+---
+
+## 2026-04-27 — Conditional flags: revert hybrid → pure jsonb (supersedes earlier hybrid decision)
+
+**Context:** Earlier today (entry above) we approved a hybrid: typed columns for known flags + `flags_extras jsonb`. After the architect read Appendix B.1 directly, Appendix B.1 specifies a single `flags` jsonb column on `facilities` — no typed columns.
+
+**Decision:** Supersede the hybrid. Use a single `flags jsonb NOT NULL DEFAULT '{}'` column on `facilities`, matching Appendix B.1 verbatim. The earlier hybrid entry stays in this file for trail; this entry is the current truth.
+
+**Why:**
+- Appendix B.1 is the authoritative column spec; we deviate only when justified
+- The reasoning behind the hybrid (type safety, indexability) was sound, but Appendix B.1 had already weighed those tradeoffs and chose jsonb
+- TypeScript types for the JSON shape will be hand-maintained in `web/lib/db/types/facility-flags.ts` — same outcome as a typed column, just one indirection
+- Reverting now (before any seed data exists) is free; reverting in Wave 2 would require data migration
+
+**Alternatives considered:**
+- Keep the hybrid and document it as a justified deviation: rejected — the original justification was based on inferred Appendix B contents; with the actual contents read, the deviation lacks merit
+- Pure typed columns: rejected — same reason
+
+**Foundation doc reference:** Appendix B.1 (definitive)
+**Reversibility:** Easy. If we ever need typed columns for a specific flag, we add a generated column or a typed column populated from `flags`.
+
+---
+
+## 2026-04-27 — Discussions: normalize despite Appendix B's flat jsonb design
+
+**Context:** Appendix B.1 specifies discussions as a single table with `thread_id`, `subject_id`, and `messages` as a JSON array. The conventional database design — one row per message — is more queryable.
+
+**Decision:** Deviate from Appendix B.1. Create two tables: `discussion_threads` (one row per thread) and `discussion_messages` (one row per message), linked by FK.
+
+`discussion_threads`: `id`, `submission_id` (FK RESTRICT), `status` (enum: open/resolved), `created_at`, `resolved_at` (nullable).
+`discussion_messages`: `id`, `thread_id` (FK RESTRICT), `author_id` (FK personnel RESTRICT), `author_role` (enum: contributor/ho, denormalized for queryability), `message_text`, `created_at`.
+
+**Why:**
+- Per-message audit log granularity — each message is an INSERT we can audit, not a parent-row UPDATE that loses prior message versions
+- Foreign-key enforcement on `author_id` is impossible inside jsonb arrays
+- Wave 3 NL audit search ("why was this submission sent back?") needs to JOIN messages to authors and filter by date — trivial with rows, awkward with jsonb
+- Cost is one extra table — negligible at demo scale
+
+**Alternatives considered:**
+- Follow Appendix B.1 literally: rejected — sacrifices FK enforcement, audit granularity, and Wave 3 query simplicity for one fewer table
+- Hybrid (jsonb messages + denormalized message rows for indexing): rejected — two sources of truth that can drift
+
+**Foundation doc reference:** Appendix B.1 (deviation)
+**Reversibility:** Medium. Collapsing two tables back into one with a jsonb column is straightforward; data migration would aggregate messages by thread.
+
+---
+
+## 2026-04-27 — Audit log batch hashing deferred to Wave 2 / production hardening
+
+**Context:** Section 15.3 mandates cryptographic hashes for audit log batches as a tamper-evidence mechanism. Implementing it requires either a Postgres extension (`pgcrypto` is fine) plus a batching scheme (every N events get a Merkle-style chained hash) or an off-database log shipper.
+
+**Decision:** Defer batch hashing to Wave 2 or production hardening. Wave 1 `audit_log` is INSERT-only enforced by trigger + REVOKE on UPDATE/DELETE — that is the demo-grade tamper resistance. No cryptographic chain.
+
+**Why:**
+- Batch hashing is overkill for a single-tenant demo with no real data
+- The demo runs on Supabase, where the service role can already bypass row-level controls; cryptographic chain would not actually block a malicious service-role caller, only detect tampering after the fact
+- Wave 3's NL audit search and Wave 2's review queue both work the same with or without the hash chain
+- Implementing it well requires coordination with whatever the production log destination will be (Datadog? Splunk? CloudWatch?) — premature
+
+**Alternatives considered:**
+- Implement now: rejected — premature, no real data to protect
+- Skip permanently: rejected — Section 15.3 is part of the spec; defer is the right framing
+
+**Foundation doc reference:** Section 15.3 (deferred)
+**Reversibility:** Easy. Adding `audit_log_batches` table and a periodic-job hashing function is additive. `audit_log` rows themselves are unchanged.
+
+---
+
+## 2026-04-27 — geo_location dropped (Appendix B amendment)
+
+**Context:** Appendix B.1 was inferred to include a `geo_location` field on `facilities`. The architect re-read the foundation document and confirmed this was added without justification.
+
+**Decision:** Drop `geo_location` (and the previously-discussed `latitude`/`longitude` split) entirely. Facility location is captured as text address fields only: `city`, `state`, `pincode`, `address`. No coordinates.
+
+**Why:**
+- Section 9 specifies HO-entered metadata only; coordinates are not in scope
+- Sections 45–51 (inspection module) explicitly exclude geo-tagging
+- The demo never needs distance queries or maps — every screen renders address text
+- Dropping a column we never need is cheaper than carrying it as nullable
+
+**Alternatives considered:**
+- Keep as `text`: rejected — dead column
+- Keep as `numeric(9,6)` lat/lng: rejected — same, with overhead of CHECK constraints
+
+**Foundation doc reference:** Appendix B.1 amendment, Section 9, Sections 45–51
+**Reversibility:** Easy. If a future feature needs coordinates, add columns then.
+
+---
+
+## 2026-04-27 — Migration 001 applied via dashboard SQL Editor (CLI auth deferred)
+
+**Context:** The Supabase CLI was approved as the migration tool (entry above). On this Windows machine, `npm i -g supabase` is no longer supported by Supabase, scoop is not installed, and `supabase login` requires a TTY (Claude's bash is non-TTY). Direct binary download to `.tools/supabase.exe` works for command discovery but auth is blocked.
+
+**Decision:** Wave 1's first migration (`001_core_schema.sql`) was applied by pasting the file contents into the Supabase dashboard SQL Editor. Subsequent migrations (Wave 2+) will use the CLI once `SUPABASE_ACCESS_TOKEN` is set up.
+
+**Why:**
+- One-time cost of setting up CLI auth (generating an access token, storing it as an env var) is real but small
+- For the first migration specifically, the dashboard paste is faster than the CLI auth setup for a single-tenant demo
+- Smoke tests use `@supabase/supabase-js` with the service role key, which works regardless of CLI auth state — so the validation path is unaffected
+
+**Alternatives considered:**
+- Block on CLI setup for migration 001: rejected — friction for no functional benefit at Wave 1
+- Permanently rely on dashboard pastes: rejected — doesn't scale to multiple migrations and breaks the Wave 2/3 muscle memory
+
+**Foundation doc reference:** N/A (tooling decision)
+**Reversibility:** Easy. CLI workflow works fine once auth is set up; future migrations follow the README without amendment.

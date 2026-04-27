@@ -54,3 +54,6 @@ supabase/.temp
 
 # Misc
 tmp/
+
+# Local CLI binaries (Supabase CLI installed manually since npm i -g and scoop unavailable)
+.tools/
