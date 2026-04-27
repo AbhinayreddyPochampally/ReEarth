@@ -68,10 +68,11 @@ export interface ParameterCatalogEntry {
 //     If the architect wants per-event submissions, we extend the enum via
 //     migration 003 to include 'per_event'.
 //
-// (2) Boiler LPG gap — Factory-002 has `boiler_fuel=lpg` (per
-//     vertical-slice-spec.md) but Appendix A only enumerates biomass / wood /
-//     diesel. Added `boiler_lpg_kg` here as a Demo-Spec amendment to Appendix A
-//     so Factory-002 can log boiler fuel. Architect: confirm or remove.
+// (2) Boiler fuel — architect confirmed 2026-04-28: briquettes is the ONLY
+//     boiler fuel type across all ABFRL facilities. All multi-fuel variants
+//     (biomass, wood, diesel, lpg) removed. Replaced with single
+//     `boiler_briquettes_kg` parameter. Both factories updated to
+//     `boiler_fuel=briquettes` in facilities.ts.
 //
 // (3) STP quality split — Appendix A row "STP discharge — quality" lists unit
 //     "mg/l (BOD, COD, TSS, etc.)" — multi-value. The schema's
@@ -162,53 +163,18 @@ export const PARAMETERS: ParameterCatalogEntry[] = [
     appendix_ref: "A.1",
   },
   {
-    code: "boiler_biomass_tonnes",
-    name: "Boiler — biomass",
-    unit: "tonnes",
-    frequency: "daily", // daily logged, monthly aggregate; submissions can be per-day or per-month
-    evidence_required: "required",
-    category: "energy",
-    applicability: { retail: "not_applicable", office: "not_applicable", warehouse: "not_applicable", factory: "always" },
-    conditional_predicate: { has_boiler: true, boiler_fuel: "biomass" },
-    evidence_note: "Logbook photos + vendor invoices (OCR)",
-    appendix_ref: "A.1",
-  },
-  {
-    code: "boiler_wood_tonnes",
-    name: "Boiler — wood",
-    unit: "tonnes",
-    frequency: "daily",
-    evidence_required: "required",
-    category: "energy",
-    applicability: { retail: "not_applicable", office: "not_applicable", warehouse: "not_applicable", factory: "conditional" },
-    conditional_predicate: { has_boiler: true, boiler_fuel: "wood" },
-    evidence_note: "Logbook + vendor invoices",
-    appendix_ref: "A.1",
-  },
-  {
-    code: "boiler_diesel_litres",
-    name: "Boiler — diesel",
-    unit: "litres",
-    frequency: "daily",
-    evidence_required: "required",
-    category: "energy",
-    applicability: { retail: "not_applicable", office: "not_applicable", warehouse: "not_applicable", factory: "conditional" },
-    conditional_predicate: { has_boiler: true, boiler_fuel: "diesel" },
-    evidence_note: "Logbook + vendor invoices",
-    appendix_ref: "A.1",
-  },
-  {
-    // Demo-Spec amendment to Appendix A — see note (2)
-    code: "boiler_lpg_kg",
-    name: "Boiler — LPG",
+    // Architect confirmed 2026-04-28: briquettes is the only boiler fuel type.
+    // Replaces the former multi-fuel set (biomass, wood, diesel, lpg).
+    code: "boiler_briquettes_kg",
+    name: "Boiler — briquettes",
     unit: "kg",
-    frequency: "daily",
+    frequency: "monthly", // daily logbook aggregated to monthly submission
     evidence_required: "required",
     category: "energy",
     applicability: { retail: "not_applicable", office: "not_applicable", warehouse: "not_applicable", factory: "conditional" },
-    conditional_predicate: { has_boiler: true, boiler_fuel: "lpg" },
-    evidence_note: "Logbook + vendor invoices (extension; not in Appendix A)",
-    appendix_ref: "A.1 (amendment)",
+    conditional_predicate: { has_boiler: true }, // single fuel type; no fuel-variant gate needed
+    evidence_note: "Logbook photos + vendor invoices (OCR)",
+    appendix_ref: "A.1 (amended: briquettes only, per architect decision 2026-04-28)",
   },
   {
     code: "solar_generation_kwh",
@@ -587,8 +553,10 @@ export const PARAMETERS: ParameterCatalogEntry[] = [
     frequency: "annual",
     evidence_required: "required",
     category: "air",
-    applicability: { retail: "not_applicable", office: "conditional", warehouse: "not_applicable", factory: "conditional" },
-    conditional_predicate: { has_dg: true }, // see note (6)
+    // Gate 6 revised 2026-04-28: architect confirmed warehouse also gets DG
+    // stack monitoring (any facility with has_dg=true, not factory-only).
+    applicability: { retail: "not_applicable", office: "conditional", warehouse: "conditional", factory: "conditional" },
+    conditional_predicate: { has_dg: true },
     evidence_note: "Lab report (OCR) — annual third-party test",
     appendix_ref: "A.4",
   },
@@ -699,10 +667,10 @@ export const PARAMETERS: ParameterCatalogEntry[] = [
 
 /**
  * Quick stats for sanity:
- *   Total parameters: 46
- *     A.1 Energy:       11 (incl. boiler_lpg_kg amendment)
+ *   Total parameters: 43  (was 46; -4 boiler fuel variants +1 boiler_briquettes_kg)
+ *     A.1 Energy:       8  (was 11; 4 fuel variants removed, briquettes added)
  *     A.2 Water:        10 (STP quality split into 3 → BOD/COD/TSS)
  *     A.3 Waste:        15 (6 general + 9 hazardous incl. haz_e_waste amendment)
- *     A.4 Air:          5
+ *     A.4 Air:          5  (stack_emissions_dg now includes warehouse per Gate 6)
  *     A.5 Operational:  3 + 2 master_data
  */

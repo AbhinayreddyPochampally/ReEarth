@@ -35,13 +35,22 @@ If everything else fails, this URL is the demo.
   - Schema follows foundation Section 8 + Appendix B
   - Apply migration to Supabase, verify tables exist
 
-- [ ] **Task 1.4** — Seed minimal Wave 1 data
-  - Seed: 1 factory + 1 store
-  - 3 parameters per facility
-  - 1 PIN per facility (hashed)
-  - 2 personnel per facility
-  - 5 historical submissions (mixed status)
-  - Commit seed script in `supabase/seed/wave1.ts`
+- [x] **Task 1.4** — Seed full Wave 1 data (all 10 facilities)
+
+  Completed 2026-04-28. Verified output:
+  Facilities 10, Parameters 43, Personnel 23, Assignments 173,
+  Regulatory limits 4, Submissions 496, Hazardous events 78, Breaches 1.
+
+  Key decisions recorded in `docs/decisions.md` (2026-04-28 entries):
+  boiler fuel = briquettes only, DG stack emissions includes warehouse,
+  monthly aggregate for per-event params, STP split into 3 rows,
+  master-data params catalog-only, store flag defaults approved.
+
+  Migration 002 applied: `audit_log.actor_id` changed to ON DELETE SET NULL
+  so re-seeds never block on prior audit trail entries.
+
+  Login credentials in `supabase/seed/output/pins.csv` (git-ignored).
+  HO user: FAC00001 / PIN 7421 / name "Anita HO".
 
 ### Auth phase
 

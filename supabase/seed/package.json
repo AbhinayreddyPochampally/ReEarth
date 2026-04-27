@@ -1,0 +1,19 @@
+{
+  "name": "reearth-seed",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "seed:wave1": "tsx wave1.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.104.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  }
+}

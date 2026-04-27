@@ -300,3 +300,39 @@ The agent frontmatter was already correct from the starter kit; the bug was the 
 
 **Foundation doc reference:** N/A (tooling decision)
 **Reversibility:** Trivial. Re-add `"model": "claude-opus-4-7"` to `~/.claude/settings.json` to restore the all-Opus behavior.
+
+---
+
+## 2026-04-28 — Task 1.4 seed design gates — architect answers recorded
+
+**Context:** Six design questions were surfaced during Task 1.4a and required architect sign-off before the seed script could be written.
+
+**Decisions:**
+
+*Gate 1 — Frequency for "per refill" parameters:* **Option A — monthly aggregate.** Diesel, LPG, refrigerant, e-waste are aggregated and submitted monthly. No `per_event` enum addition; no migration 002 needed.
+
+*Gate 2 — Boiler fuel:* **Briquettes only.** All boiler fuel parameter variants removed (biomass, wood, diesel, LPG). Single `boiler_briquettes_kg` parameter added. Both Factory-001 and Factory-002 have `boiler_fuel=briquettes`. Conditional predicate is simply `{ has_boiler: true }` with no fuel-type gate.
+
+*Gate 3 — STP quality split:* **Three separate parameters confirmed** (BOD, COD, TSS). Matches the existing catalog split and the single-numeric `submissions.value_normalized` column.
+
+*Gate 4 — Master data parameters:* **Confirmed.** `floor_area_sqft` and `staff_headcount` are inserted into the `parameters` table for catalog completeness but no `parameter_assignments` are created. They are edited via the Wave 2 master-data UI.
+
+*Gate 5 — New conditional flags for stores:* **Confirmed with proposed defaults.** Stores not explicitly documented in the spec receive: `has_mall_shared_dg=mall_based`, `has_rainwater_harvesting=false`, `has_hvac=true`, `has_chiller=false`, `has_ambient_air_monitoring=false`, `uses_tanker_water=false`, `active_haz_categories=['fluorescent_tubes','e_waste']`.
+
+*Gate 6 — DG stack emissions gating:* **Warehouse included.** Revised from factory-only to any facility with `has_dg=true`. Warehouse-001 (dg_count=1) now gets stack emissions monitoring.
+
+**Foundation doc reference:** Appendix A (parameter catalog), vertical-slice-spec.md (facility flags)
+**Reversibility:** Medium. Changing boiler fuel back to multi-fuel requires adding parameters and updating facilities.ts. Other gates are low-friction to revisit.
+
+---
+
+## 2026-04-28 — bcryptjs over bcrypt for demo tooling
+
+**Context:** Task 1.4 seed script needs PIN hashing. CLAUDE.md specifies bcrypt. The `bcrypt` npm package requires native compilation (node-gyp) which is unreliable on Windows without build tools.
+
+**Decision:** Use `bcryptjs` in the seed script (`supabase/seed/`) and plan to use it in the auth layer (Task 1.6). `bcryptjs` is the pure-JS port of bcrypt — identical algorithm, identical hash format, interoperable hashes, no native compilation.
+
+**Why:** The hash output of `bcryptjs` and `bcrypt` is identical and interchangeable. Using `bcryptjs` everywhere avoids the native compilation fragility on Windows with zero security or performance downside at demo scale.
+
+**Foundation doc reference:** Section 14.2 (PIN auth), decisions.md "PIN hashing: bcrypt only" entry (that entry's "bcrypt is mature" claim extends to bcryptjs, which is the same algorithm).
+**Reversibility:** Trivial. Swap `bcryptjs` for `bcrypt` in package.json; existing hashes continue to work.

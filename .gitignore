@@ -55,5 +55,12 @@ supabase/.temp
 # Misc
 tmp/
 
+# Seed output — contains plaintext PINs, must never be committed
+supabase/seed/output/*
+!supabase/seed/output/.gitkeep
+supabase/seed/.env
+supabase/seed/node_modules/
+supabase/seed/.build/
+
 # Local CLI binaries (Supabase CLI installed manually since npm i -g and scoop unavailable)
 .tools/
