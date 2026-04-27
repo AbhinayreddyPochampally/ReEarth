@@ -1,0 +1,24 @@
+# GitHub Actions workflow for Azure App Service deployment.
+# Claude Code will fill this in during Task 1.11 (Wave 1).
+# This file is a placeholder so the folder structure is committed.
+#
+# When complete, this workflow:
+# 1. Triggers on push to main (or manual dispatch)
+# 2. Installs Node 20
+# 3. Builds Next.js (npm ci, npm run build)
+# 4. Deploys to Azure App Service using publish profile from secrets
+# 5. Smoke tests the deployed URL
+#
+# Secrets required (set in GitHub repo Settings → Secrets and variables → Actions):
+# - AZURE_WEBAPP_PUBLISH_PROFILE
+# - AZURE_WEBAPP_NAME
+#
+# Reference: https://learn.microsoft.com/en-us/azure/app-service/deploy-github-actions
+
+name: Placeholder
+on: [workflow_dispatch]
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Replace this file in Wave 1 Task 1.11"

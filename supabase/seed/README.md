@@ -1,0 +1,1 @@
+-- Wave seed scripts will be created by Claude Code in each wave's playbook

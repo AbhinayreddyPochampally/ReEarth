@@ -1,0 +1,1 @@
+-- Database migrations will be created by Claude Code starting Wave 1 Task 1.3

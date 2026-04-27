@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qE '\\baz\\b.*\\b(create|deploy|provision)\\b'; then echo 'BLOCK: az provisioning command detected. Architect must explicitly approve. State the cost first.'; exit 1; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qE '\\b(DROP|TRUNCATE)\\b'; then echo 'BLOCK: destructive SQL detected. Architect must explicitly approve.'; exit 1; fi"
+          }
+        ]
+      }
+    ]
+  },
+  "_comment": "Hooks above are deterministic guardrails. PreToolUse hook on Bash blocks (1) Azure provisioning commands without explicit confirmation flow, (2) destructive SQL commands. Edit hooks here as the project matures. See https://docs.claude.com/en/docs/claude-code/hooks for hook reference."
+}
