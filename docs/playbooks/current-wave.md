@@ -17,7 +17,7 @@ If everything else fails, this URL is the demo.
   - Verify `npm run dev` starts a server on localhost:3000
   - Commit as "wave 1.0: scaffold Next.js project"
 
-- [ ] **Task 1.1** — Set up Supabase project
+- [x] **Task 1.1** — Set up Supabase project
   - Architect creates the Supabase project at supabase.com (free tier)
   - Architect provides URL + anon key + service role key, written into `.env.local`
   - Verify connection by running `web/scripts/test-supabase-connection.ts`
