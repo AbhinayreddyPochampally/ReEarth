@@ -45,11 +45,14 @@ jobs:
           # Parse ZipDeploy credentials with regex — robust to whitespace/BOM/extra lines in the secret.
           ZIP_BLOCK=$(printf '%s' "$PUBLISH_PROFILE" | grep -oP '<publishProfile[^>]*publishMethod="ZipDeploy"[^>]*>' || true)
           if [ -z "$ZIP_BLOCK" ]; then
-            echo "ERROR: ZipDeploy profile not found in PUBLISH_PROFILE secret"
+            echo "ERROR: ZipDeploy profile not found"
             exit 1
           fi
+          ZIP_COUNT=$(printf '%s\n' "$ZIP_BLOCK" | wc -l)
+          echo "Secret length: ${#PUBLISH_PROFILE}, ZipDeploy matches: $ZIP_COUNT"
           KUDU_USER=$(printf '%s' "$ZIP_BLOCK" | grep -oP 'userName="\K[^"]+')
           KUDU_PWD=$(printf '%s' "$ZIP_BLOCK" | grep -oP 'userPWD="\K[^"]+')
+          echo "user length=${#KUDU_USER} pwd length=${#KUDU_PWD}"
           if [ -z "$KUDU_USER" ] || [ -z "$KUDU_PWD" ]; then
             echo "ERROR: Could not extract credentials from ZipDeploy profile"
             exit 1
