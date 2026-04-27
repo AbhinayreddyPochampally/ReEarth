@@ -89,7 +89,7 @@ If everything else fails, this URL is the demo.
 
 ### Deployment phase
 
-- [ ] **Task 1.11** — GitHub Actions workflow for Azure App Service
+- [x] **Task 1.11** — GitHub Actions workflow for Azure App Service
   - Build Next.js, deploy to Azure on push to `main`
   - Smoke test: hit the deployed URL after deploy, expect 200
   - Use Azure publish profile (architect provides)
