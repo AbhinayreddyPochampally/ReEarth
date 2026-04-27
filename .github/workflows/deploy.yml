@@ -23,23 +23,29 @@ jobs:
         working-directory: web
         run: npm ci
 
-      - name: Build Next.js
+      - name: Build Next.js (standalone output)
         working-directory: web
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
 
+      - name: Assemble standalone deploy package
+        run: |
+          # Next.js standalone output needs public/ and .next/static/ copied in manually.
+          cp -r web/public web/.next/standalone/public
+          cp -r web/.next/static web/.next/standalone/.next/static
+
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
           app-name: reearth
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: web
+          package: web/.next/standalone
 
       - name: Smoke test
         run: |
-          sleep 30
+          sleep 45
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://reearth.azurewebsites.net)
           echo "Response: $STATUS"
           if [ "$STATUS" != "200" ]; then
