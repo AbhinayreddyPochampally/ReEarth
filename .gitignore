@@ -48,6 +48,8 @@ supabase/.temp
 
 # Azure
 *.PublishSettings
+*.publish-profile.xml
+*-publish-profile.xml
 .azure/
 
 # Misc

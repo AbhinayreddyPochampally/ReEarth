@@ -1,24 +1,49 @@
-# GitHub Actions workflow for Azure App Service deployment.
-# Claude Code will fill this in during Task 1.11 (Wave 1).
-# This file is a placeholder so the folder structure is committed.
-#
-# When complete, this workflow:
-# 1. Triggers on push to main (or manual dispatch)
-# 2. Installs Node 20
-# 3. Builds Next.js (npm ci, npm run build)
-# 4. Deploys to Azure App Service using publish profile from secrets
-# 5. Smoke tests the deployed URL
-#
-# Secrets required (set in GitHub repo Settings → Secrets and variables → Actions):
-# - AZURE_WEBAPP_PUBLISH_PROFILE
-# - AZURE_WEBAPP_NAME
-#
-# Reference: https://learn.microsoft.com/en-us/azure/app-service/deploy-github-actions
+name: Deploy to Azure App Service
 
-name: Placeholder
-on: [workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
 jobs:
-  noop:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - run: echo "Replace this file in Wave 1 Task 1.11"
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build Next.js
+        working-directory: web
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: reearth
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: web
+
+      - name: Smoke test
+        run: |
+          sleep 30
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://reearth.azurewebsites.net)
+          echo "Response: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "Smoke test failed: expected 200, got $STATUS"
+            exit 1
+          fi
+          echo "Smoke test passed"

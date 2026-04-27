@@ -22,7 +22,7 @@ If everything else fails, this URL is the demo.
   - Architect provides URL + anon key + service role key, written into `.env.local`
   - Verify connection by running `web/scripts/test-supabase-connection.ts`
 
-- [ ] **Task 1.2** — Set up Azure App Service
+- [x] **Task 1.2** — Set up Azure App Service
   - Architect runs `az login` then provides Resource Group name
   - Create App Service B1 tier, link to GitHub Actions deployment
   - Verify a hello-world Next.js deploys and serves on the Azure URL
