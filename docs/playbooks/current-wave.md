@@ -91,7 +91,7 @@ If everything else fails, this URL is the demo.
 
 ### HO phase
 
-- [ ] **Task 1.10** — Build HO review queue
+- [x] **Task 1.10** — Build HO review queue
   - Single list, all pending submissions, sorted by submitted_at DESC
   - Each row: facility name, parameter, value+unit, evidence thumbnail, contributor name, submitted_at
   - Click thumbnail to view full image
