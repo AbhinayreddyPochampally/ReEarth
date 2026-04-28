@@ -54,37 +54,40 @@ If everything else fails, this URL is the demo.
 
 ### Auth phase
 
-- [ ] **Task 1.5** — Build login screen UI
-  - Three-field form: SAP code, PIN, name dropdown
-  - Name dropdown populates after SAP code is entered (lookup personnel for that facility)
-  - Loading states, error states
-  - Mobile-responsive
+- [x] **Task 1.5** — Build login screen UI
+  - Two-step form: SAP code → Continue → personnel list fetched from /api/personnel
+  - PIN entry + name dropdown in step 2
+  - Loading states, error states; mobile-responsive
+  - Completed 2026-04-28
 
-- [ ] **Task 1.6** — Build auth backend
-  - SAP code + PIN validates against `facilities` table (hash compare)
-  - Successful login creates Supabase Auth session with custom metadata: facility_id, personnel_id, role (contributor or ho)
-  - Failed PIN: track attempts, lockout after 5 fails for 15 minutes (per Section 14.2)
-  - Logout flow
+- [x] **Task 1.6** — Build auth backend
+  - iron-session (v8) for HttpOnly encrypted cookie sessions
+  - bcryptjs PIN verify against facilities.pin_hash
+  - Lockout after 5 fails for 15 min (Section 14.2) via facilities.pin_failed_attempts
+  - Logout destroys session + writes audit event
+  - Completed 2026-04-28
 
-- [ ] **Task 1.7** — Routing post-login
-  - HO users redirect to `/ho`
-  - Contributors redirect to `/contributor`
-  - Logged-out users hitting protected routes redirect to `/login`
+- [x] **Task 1.7** — Routing post-login
+  - proxy.ts (Next.js 16 renamed from middleware.ts) — cookie-existence guard
+  - Layout components (contributor/layout.tsx, ho/layout.tsx) do full session + role validation
+  - / → /login; HO → /ho; contributor → /contributor
+  - Completed 2026-04-28
 
 ### Contributor phase
 
-- [ ] **Task 1.8** — Build contributor Home screen
-  - Shows pending parameters for the facility, sorted by due date
-  - Each row: parameter name, due period, frequency badge
-  - Tap a row → navigate to form for that parameter
+- [x] **Task 1.8** — Build contributor Home screen
+  - Parameters grouped by status: Due / Pending review / Approved
+  - Sorted by urgency then category then name
+  - Row shows name, unit, frequency badge, status chip; tappable for Due/Sent-back
+  - Completed 2026-04-28
 
-- [ ] **Task 1.9** — Build contributor form screen
-  - Numerical input field (with unit shown)
-  - Photo upload (camera + gallery)
-  - Date selector (defaults to today, allows backdate per rules)
-  - Submit button
-  - On submit: insert submission, upload photo to storage, link as evidence, create audit log entry
-  - Show success toast, return to Home
+- [x] **Task 1.9** — Build contributor form screen
+  - Numerical input with unit, optional photo upload (camera + gallery)
+  - Period defaults to current calendar month (no date picker in Wave 1 — Wave 2)
+  - Server action creates submission + optional evidence + audit_log entry
+  - Redirects to /contributor on success
+  - Note: Supabase Storage bucket 'evidence' must be created manually for photo upload to work
+  - Completed 2026-04-28
 
 ### HO phase
 

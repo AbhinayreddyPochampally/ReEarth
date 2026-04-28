@@ -202,11 +202,11 @@ const g1 = await insertHazEvent({
   eventAt: "2026-01-15T00:00:00Z", periodStart: "2026-01-01", periodEnd: "2026-01-31",
   eventType: "hazardous_generation", qty: 100, generationDate: "2026-01-15",
 });
-const g2 = await insertHazEvent({
+await insertHazEvent({
   eventAt: "2026-02-10T00:00:00Z", periodStart: "2026-02-01", periodEnd: "2026-02-28",
   eventType: "hazardous_generation", qty: 60, generationDate: "2026-02-10",
 });
-const g3 = await insertHazEvent({
+await insertHazEvent({
   eventAt: "2026-03-05T00:00:00Z", periodStart: "2026-03-01", periodEnd: "2026-03-31",
   eventType: "hazardous_generation", qty: 40, generationDate: "2026-03-05",
 });
@@ -221,7 +221,7 @@ if (JSON.stringify(balances1) === JSON.stringify(expected1)) {
 }
 
 // Step 2: 1 disposal of 50, depleting from g1 (FIFO)
-const d1 = await insertHazEvent({
+await insertHazEvent({
   eventAt: "2026-03-20T00:00:00Z", periodStart: "2026-03-01", periodEnd: "2026-03-31",
   eventType: "hazardous_disposal", qty: 50, generationDate: "2026-01-15",
   batchId: g1.event.id, manifest: "MAN-001",
@@ -237,7 +237,7 @@ if (JSON.stringify(balances2) === JSON.stringify(expected2)) {
 }
 
 // Step 3: backdated generation event BEFORE all others
-const g0 = await insertHazEvent({
+await insertHazEvent({
   eventAt: "2025-12-01T00:00:00Z", periodStart: "2025-12-01", periodEnd: "2025-12-31",
   eventType: "hazardous_generation", qty: 25, generationDate: "2025-12-01",
 });
@@ -255,10 +255,6 @@ if (JSON.stringify(balances3) === JSON.stringify(expected3)) {
 // ---------------------------------------------------------------------------
 console.log("\nCleanup — delete leaf-first; audit_log rows persist (append-only)");
 // ---------------------------------------------------------------------------
-async function delAll(table: string, col: string, val: string) {
-  const { error } = await sb.from(table).delete().eq(col, val);
-  if (error) console.log(`  cleanup ${table} (${col}=${val.slice(0,8)}): ${error.message}`);
-}
 await sb.from("discussion_messages").delete().eq("thread_id", thr.id);
 await sb.from("discussion_threads").delete().eq("id", thr.id);
 await sb.from("evidence").delete().eq("submission_id", sub.id);
