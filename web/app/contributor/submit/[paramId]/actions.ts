@@ -39,7 +39,9 @@ export async function submitFormAction(
   let submissionId: string;
   try {
     submissionId = await createSubmission({
-      facility_id: session.facility_id,
+      // Contributor sessions always have facility_id — enforced by the
+      // ContributorLayout gate (auth/session.ts) and the DB CHECK in 004.
+      facility_id: session.facility_id!,
       parameter_id: parameterId,
       submitted_by: session.personnel_id,
       submitted_by_name: session.name,
