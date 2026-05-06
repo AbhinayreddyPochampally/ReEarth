@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:v1": "node --test scripts/v1-contract-smoke.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.104.1",

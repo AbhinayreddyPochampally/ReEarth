@@ -1,6 +1,6 @@
 # ReEarth 2.0 Demo — Frontend
 
-Next.js 16 App Router application. See `docs/` at the repo root for design decisions and wave playbooks.
+Next.js 16 App Router application. See `docs/` at the repo root for the design doc, UI sketch, decisions log, and phase playbooks.
 
 ## Quickstart
 
