@@ -5,7 +5,7 @@ description: Use whenever the architect asks about natural language input, NL qu
 
 # Natural Language Features Implementation Guide
 
-## The four NL features in Wave 3
+## The four NL features in Phase 3
 
 1. **NL Input on contributor form** — contributor types/speaks, AI extracts structured submission
 2. **NL Query on HO data explorer** — HO types question, AI converts to structured filter
