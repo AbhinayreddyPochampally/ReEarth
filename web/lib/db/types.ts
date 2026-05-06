@@ -1,7 +1,8 @@
-// TypeScript types mirroring the database schema (001_core_schema.sql).
+// TypeScript types mirroring the database schema (001_core_schema.sql + 003).
 // Keep these in sync with any schema migrations.
 
-export type FacilityType = 'factory' | 'warehouse' | 'store';
+// Post-2026-05-06 rescope: only factory and warehouse. Retail stores out of scope.
+export type FacilityType = 'factory' | 'warehouse';
 export type PersonnelRole = 'contributor' | 'ho';
 export type SubmissionStatus = 'pending' | 'approved' | 'sent_back' | 'resubmitted';
 export type ParameterFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annual';
@@ -18,7 +19,8 @@ export interface Facility {
   state: string;
   pincode: string;
   address: string;
-  size_sqft: number | null;
+  // size_sqft removed in 2026-05-06 rescope; floor area is now a master_data
+  // parameter, edited via the Master Data UI rather than carried on facilities.
   flags: Record<string, unknown>;
   pin_hash: string;
   pin_failed_attempts: number;
@@ -29,9 +31,14 @@ export interface Facility {
 
 export interface Personnel {
   id: string;
-  facility_id: string;
+  // Nullable post-migration 003: HO users are corporate (facility_id = null).
+  facility_id: string | null;
   name: string;
   designation: string;
+  // Email + password_hash + is_super_user are HO-only (CHECK constraint enforced).
+  email: string | null;
+  password_hash: string | null;
+  is_super_user: boolean;
   role: PersonnelRole;
   active_to: string | null;
 }

@@ -62,12 +62,15 @@ function SubmissionCard({ sub, onActioned }: CardProps): React.ReactElement {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
           onClick={() => setLightbox(false)}
         >
-          <img
-            src={sub.thumb_url}
-            alt="Evidence"
-            className="max-h-full max-w-full rounded-lg object-contain"
-            onClick={e => e.stopPropagation()}
-          />
+          <div className="relative h-full max-h-[90vh] w-full max-w-5xl" onClick={e => e.stopPropagation()}>
+            <Image
+              src={sub.thumb_url}
+              alt="Evidence"
+              fill
+              className="rounded-lg object-contain"
+              sizes="100vw"
+            />
+          </div>
           <button
             className="absolute right-4 top-4 text-2xl text-white"
             onClick={() => setLightbox(false)}
