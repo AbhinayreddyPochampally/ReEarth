@@ -1,6 +1,6 @@
 # Day 1 — Step-by-Step Setup Guide
 
-The first day. Follow this exactly. Don't improvise. By the end, you'll have everything installed and Claude Code will be running in a terminal, ready to start Wave 1 tomorrow.
+The first day. Follow this exactly. Don't improvise. By the end, you'll have everything installed and Claude Code will be running in a terminal, ready to start Phase 1 tomorrow.
 
 Estimated time: **2–3 hours** (mostly waiting for installs and account approvals).
 
@@ -74,7 +74,7 @@ Verify with `az --version`.
 
 - Go to https://supabase.com
 - Sign up (you can use "Sign in with GitHub" to skip account creation)
-- Don't create a project yet — we'll do that in Wave 1
+- Don't create a project yet — we'll do that in Phase 1
 
 ### 2.4 Azure for Students ($100 credit)
 
@@ -148,10 +148,10 @@ It'll open a login flow in your browser. Approve. The terminal will confirm you'
 Once Claude Code is ready, paste this exactly:
 
 ```
-Read CLAUDE.md, README.md, docs/vertical-slice-spec.md, docs/decisions.md, docs/playbooks/current-wave.md, and docs/playbooks/how-to-direct-claude.md. After reading, summarize what you understand about:
+Read CLAUDE.md, README.md, docs/design-doc.docx, docs/decisions.md, docs/playbooks/current-phase.md, and docs/playbooks/how-to-direct-claude.md. Also browse docs/ui-sketch.pdf to see the visual baseline. After reading, summarize what you understand about:
 
 1. What this project is
-2. What we're building first (Wave 1)
+2. What we're building first (Phase 1 reconciliation, then Phase 2)
 3. The architect-developer relationship
 4. Any rules or constraints you noticed
 
@@ -170,7 +170,7 @@ After the first reply, try:
 /orient
 ```
 
-This is a slash command we set up. Claude Code should re-read context, identify Wave 1's first task (Task 1.0 — Initialize Next.js project), and propose a plan using the planner subagent. Don't approve the plan yet — that's Day 2's work.
+This is a slash command we set up. Claude Code should re-read context, identify Phase 1's first task (Task 1.0 — Initialize Next.js project), and propose a plan using the planner subagent. Don't approve the plan yet — that's Day 2's work.
 
 ### 4.5 End the session cleanly
 
@@ -190,7 +190,7 @@ Once Azure for Students is approved, you'll get an email. When you see "Welcome 
 2. A browser opens, authenticate with the same email
 3. Verify with `az account show`
 
-Don't provision anything yet. Wave 1 will guide that.
+Don't provision anything yet. Phase 1 will guide that.
 
 ## Day 1 done
 
@@ -204,7 +204,7 @@ By end of Day 1:
 - [x] Slash commands tested (`/orient`, `/end-session`)
 - [x] Azure CLI authenticated (when approval comes through)
 
-Tomorrow: Wave 1 begins.
+Tomorrow: Phase 1 begins.
 
 ## Common Day 1 issues
 
@@ -238,4 +238,4 @@ Tomorrow: Wave 1 begins.
 
 ## When you're ready for Day 2
 
-Tell me: "Day 1 complete." I'll walk you through Day 2 (starting Wave 1 Task 1.0).
+Tell me: "Day 1 complete." I'll walk you through Day 2 (starting Phase 1 Task 1.0).

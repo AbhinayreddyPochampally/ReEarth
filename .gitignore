@@ -45,6 +45,8 @@ supabase/.temp
 # Claude Code (keep config, ignore runtime artifacts)
 .claude/cache/
 .claude/logs/
+.claude/memory/
+.claude/settings.local.json
 
 # Azure
 *.PublishSettings
@@ -54,6 +56,12 @@ supabase/.temp
 
 # Misc
 tmp/
+new-profile.xml
+
+# Stray duplicates of canonical design docs at repo root.
+# Canonical copies live at docs/design-doc.docx + docs/ui-sketch.pdf.
+/ReEarth*.docx
+/ReEarth*.pdf
 
 # Seed output — contains plaintext PINs, must never be committed
 supabase/seed/output/*

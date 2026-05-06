@@ -15,7 +15,7 @@ You will use all four many times per day. None of them are rude.
 
 Every Claude Code session starts the same way. Paste this exactly:
 
-> Read CLAUDE.md, docs/vertical-slice-spec.md, and docs/playbooks/current-wave.md. Tell me the next unchecked task in the current wave's playbook, and propose a plan for it. Do not write any code yet.
+> Read CLAUDE.md, docs/design-doc.docx (relevant sections), and docs/playbooks/current-phase.md. Tell me the next unchecked task in the current phase's playbook, and propose a plan for it. Do not write any code yet.
 
 Claude reads the context, tells you what it thinks the next task is, and proposes a plan. You either approve or push back.
 
@@ -81,8 +81,8 @@ Skim everything else. If the plan was right and the handoff is honest, the code 
 
 ## Daily habits
 
-- **Start each session by re-reading `current-wave.md`.** Know where you are in the build.
-- **End each session by updating `current-wave.md`.** Check off completed tasks.
+- **Start each session by re-reading `current-phase.md`.** Know where you are in the build.
+- **End each session by updating `current-phase.md`.** Check off completed tasks.
 - **Keep a running issues file.** When a bug shows up, jot it in `docs/playbooks/issues.md` for later.
 - **Commit at every working state.** "Save points" let you go back without panic.
 - **Don't work past frustration.** If you're stuck for 30+ minutes, stop and ask me (the assistant).
@@ -104,9 +104,9 @@ Claude will surface what slipped. You decide whether to keep or revert.
 
 ## The "I don't know what to do next" reset
 
-If you ever feel lost during a wave:
+If you ever feel lost during a phase:
 
-> Re-read CLAUDE.md, docs/vertical-slice-spec.md, and docs/playbooks/current-wave.md. List the unchecked tasks in order, and tell me what you think the next priority is and why. Don't do anything yet — just orient us.
+> Re-read CLAUDE.md, the relevant sections of docs/design-doc.docx, and docs/playbooks/current-phase.md. List the unchecked tasks in order, and tell me what you think the next priority is and why. Don't do anything yet — just orient us.
 
 Claude resets, you re-orient, work continues.
 
@@ -124,7 +124,7 @@ The single biggest budget killer is forgetting to delete resources. Always know 
 
 One week before the demo:
 
-- Stop adding features. Even if Wave 3 is incomplete, freeze.
+- Stop adding features. Even if Phase 3 is incomplete, freeze.
 - Run the full demo walk-through three times on the deployed URL.
 - Document every flake or glitch.
 - Plan for what to demo if a feature breaks live (have a backup story).

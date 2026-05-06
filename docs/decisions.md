@@ -336,3 +336,86 @@ The agent frontmatter was already correct from the starter kit; the bug was the 
 
 **Foundation doc reference:** Section 14.2 (PIN auth), decisions.md "PIN hashing: bcrypt only" entry (that entry's "bcrypt is mature" claim extends to bcryptjs, which is the same algorithm).
 **Reversibility:** Trivial. Swap `bcryptjs` for `bcrypt` in package.json; existing hashes continue to work.
+
+---
+
+## 2026-05-06 — Rescope to 15 facilities (no retail) and supersession of foundation.docx
+
+**Context:** The architect delivered a new design document — `ReEarth_2.0_Project_Design_Document (1).docx` (Version 1.0, April 2026) — plus a 46-page lo-fi UI sketch dated 03 May 2026. The new design's closing note states explicitly that it *supersedes* the earlier foundation document. The previous demo footprint (10 facilities including 7 retail stores) is replaced by a production-shape 15-facility deployment (11 garment factories + 4 distribution warehouses, no retail, no offices). Build phases replace waves; the four-queue review model collapses to a single confidence-sorted Bill Inbox; daily logs become trust-only signals (not HO-reviewed).
+
+**Decision:**
+- The new design doc is the canonical design baseline. `docs/foundation.docx` and `docs/vertical-slice-spec.md` are archived to `docs/_archive/` for trail; they are no longer authoritative.
+- Demo footprint becomes 15 facilities — 11 factories + 4 warehouses, all named after Indian cities visible in the UI sketch (Bengaluru, Tirupur, Hosur, Mysuru, Doddaballapura, Coimbatore, Kanchipuram, Belgaum, Bommasandra, Madhavaram, Tumkur factories; Bhiwandi, Tauru + two TBD warehouses).
+- Wave 1/2/3 vocabulary becomes Phase 1/2/3/4 per Section 48 of the new design.
+- The four-queue HO review model (Express / Standard / Deep / Compliance Breach) is replaced by a single Bill Inbox sorted by OCR confidence, with bulk-approve for green-tagged bills.
+- Retail-store-specific schema, parameters, and conditional flags (`mall_based`, `has_chiller`, `has_mall_shared_dg`, `has_ambient_air_monitoring` as a flag, store-only `active_haz_categories`) are removed.
+
+**Why:**
+- The new design is the architect's deliberate refocus after a quarter of working with the foundation doc; honoring it prevents the repo drifting away from the source of truth.
+- 15-facility production-shape exercises the platform under realistic load (the foundation doc's 10-facility demo footprint was a budget compromise, not a design statement).
+- Single confidence-sorted inbox is operationally simpler and more defensible than four parallel queues; OCR confidence is a more honest routing signal than an evidence-quality heuristic.
+- Daily logs as trust-only signals matches the architect's own assessment of what current two-layer review actually accomplishes (Section 5.2 of the new design).
+
+**Alternatives considered:**
+- Keep the foundation doc as authoritative and treat the new doc as proposal: rejected — the new doc explicitly supersedes; treating it as proposal would invert the chain of authority.
+- Run waves and phases in parallel naming: rejected — confuses the playbook and invites task drift.
+- Preserve retail stores as a future-flow stub in the seed: rejected — Appendix C.1 of the new doc treats stores as a future-flow item with its own parameter set, which means today's seed assumptions would be wrong shape anyway.
+
+**Foundation doc reference:** New design doc §7 (scope), §28-35 (HO surfaces), §48 (build phases), Appendix B (decisions log), Appendix C (future flow).
+**Reversibility:** Hard. Seed and parameter-catalog rebuilds are irreversible without restoring from git. Most code changes are mechanical and reversible.
+
+---
+
+## 2026-05-06 — Inconsistency resolutions (A–L) recorded for architect review
+
+**Context:** Twelve logical inconsistencies surfaced when reading the new design doc against the May UI sketch and the existing repo state. The architect requested resolutions be recorded for review. Defaults below are my recommended calls; each is reversible at low-to-moderate cost. Architect can override on review.
+
+**Decisions (one per inconsistency):**
+
+*A — Yesterday's value on daily-log cards: HIDDEN.* Architect override 2026-05-06. Original reasoning (anchoring concern from Appendix B.4) wins over the May wireframe's prominent display. Number-entry cards do **not** show yesterday's value or 7-day average. Wireframe page 11 should be treated as drift; `wireframe-fidelity` agent should not flag the absence of those elements as a regression.
+
+*B — Master-data-change push notification: SCOPE-DEPENDENT.* New rule: notify all contributors at the affected facility *only* when the change adds or removes a card on the daily logger or event picker (e.g., adding a 5th DG adds 3 daily-log cards; deactivating a vendor removes a waste-pickup option). HO-internal master-data changes (regulatory limit values, alert rule thresholds, vendor authorization renewals) do *not* notify. Reconciles Section 27.1 with UI sketch page 45.
+
+*C — Daily-logger save semantics: SIMPLIFIED — autosave-only, no Submit button.* Architect override 2026-05-06 ("simplify"). Single-stage commit: typing in a card autosaves it after 1 second of inactivity; the card visually shifts to its filled/canonical state immediately. The Submit button at the bottom of the daily logger (UI sketch p10) is not implemented as a state-change button; if a navigation affordance is needed at the bottom of the scroll, it becomes a passive "Done" / back-to-home link. Each save is canonical. The `wireframe-fidelity` agent should not flag the absence of the Submit button as drift.
+
+*D — Backdating beyond two days: NEW HO SURFACE.* Master Data > Personnel detail page gains a "Add late entry on behalf of contributor" action. HO selects the contributor, parameter, period (any past date), value, and a free-text reason. The submission flows through the normal pipeline with `actor_type=ho_override` and the reason appears in the audit log. Closes the gap left by Section 22.5.
+
+*E — HO super-user password reset: ONE SUPER-USER + DOCUMENTED SQL BREAK-GLASS.* Architect override 2026-05-06 ("No two different HO users, just one"). Single HO super-user at deployment; the deadlock risk is accepted in exchange for operational simplicity at the demo's scale. The break-glass procedure is captured in `docs/playbooks/break-glass.md`: developer runs a SQL UPDATE against `personnel.password_hash` with a fresh bcrypt-hashed value, and inserts a manual `audit_log` row recording the override.
+
+*F — Bill re-upload: ALWAYS RE-RUN OCR.* Re-uploaded file = new evidence row + fresh Document Intelligence call. Previous extracted-fields are preserved in the audit log on the prior submission_evidence row. Closes the silence in Section 30.4.
+
+*G — Daily-log retroactive edit: ACT LIKE A LOG.* Architect override 2026-05-06 ("It is a log after all, I think it should act like it, but in a digital environment"). Daily logs behave like a paper logbook with digital affordances. Every edit is recorded as a new audit_log row preserving both before and after values; the card displays the latest value; no arbitrary edit window. Drop the prior 30-day-HO-notification threshold — the audit trail is the safeguard, not a notification rule. The Edit-history affordance on the contributor PWA (UI sketch p23) is the user-facing surface for this. HO sees the history through the audit search.
+
+*H — Concurrent edits to the same daily-log card: LAST-WRITER-WINS + FULL AUDIT.* Confirmed by architect 2026-05-06 ("That won't happen, but write for it"). No optimistic locking for v1. Both saves write audit_log rows with before/after values; the card displays whichever wrote last. Volume (≤3 contributors per facility) makes real collisions rare; audit trail catches them when they happen.
+
+*I — `personnel.facility_id` nullability: NULLABLE FOR HO.* Confirmed by architect 2026-05-06. Migration 003 alters `personnel.facility_id` to be nullable. HO users have NULL facility_id and authenticate by email + password. The prior `FAC00001 = HO sentinel` pattern is removed; the seeder writes the HO super-user via `HO_USERS` in `supabase/seed/data/facilities.ts`.
+
+*J — Hazardous waste categories: ALL FACTORIES SEE ALL CATEGORIES.* Confirmed by architect 2026-05-06. No per-facility `active_haz_categories` list. Biomedical is gated by `has_first_aid` (the only narrow exception in Section 15.1). "Any other hazardous" is always available as a manual category at every factory. ETP/STP sludge is implicitly gated by `has_stp` — no STP, no sludge.
+
+*K — Audit log retention vs. Supabase free tier: STAY ON FREE TIER, ADD ARCHIVAL.* Architect override 2026-05-06 ("No pro, it is showing everything works, so make it accordingly"). Pro tier is off the table. The system must fit Supabase free tier's 500 MB ceiling. Phase 2 deliverable: a nightly archival job that compresses audit_log rows older than 90 days to Supabase Storage as JSONL bundles, then deletes them from the live table. Live retention is rolling-90-days; historical audit search routes through both the live table and the archive bundles. Affects Phase 2 task list — added there.
+
+*L — Notifications: IN-APP ONLY, NO SMS OR EMAIL.* Confirmed by architect 2026-05-06 ("no notification through SMS or Email, but do it Through APP"). PWA push registration on iOS Safari (16.4+, home-screen install required) and Android Chrome is the primary channel. When PWA push is unavailable or denied, fall back to **in-app banners** that surface on next PWA open — never SMS, never email, no outbound integrations whatsoever. This holds firm with §8.7 of the design doc. Phase 2 week-1 task: service-worker + push proof-of-concept; in-app banner is the always-available fallback.
+
+**Foundation doc reference:** New design doc §22 (daily logger), §27 (notifications), §28-30 (HO surfaces), §45-46 (auth + audit), Appendix B.4 (UX decisions), Appendix D (open questions). Specific contradictions resolved: (A) §22.3 vs UI sketch p11; (B) §27.1 vs UI sketch p45; (C) §22.1 vs §22.4 + UI sketch p10.
+**Reversibility:** Each call is independent and individually reversible. A and C are UI-only flips; B, D, F are routing/notification rules; E and L are operational practice; G, H are state-machine rules; I, J are schema; K is infrastructure.
+
+---
+
+## 2026-05-06 — `daily_completion` removed as a contributor-entered parameter
+
+**Context:** The v1 sample-data parameter catalog included `daily_completion` (label: "Daily log completion", category: compliance, cadence: daily, unit: %). It rendered as a tappable card on the daily logger and let a contributor type a self-reported completion percentage. Architect spotted the circular logic during the click-through — the parameter is conceptually a derived metric (% of expected daily params with a submission today), not a contributor input.
+
+**Decision:** Remove `daily_completion` from the parameter catalog used by the daily logger and contributor home. The completion percentage is computed live on the contributor home from `done / total` of `dailyParams`. Phase 3 surfaces it on the HO Dashboards alongside the other computed metrics; no DB column or master-data parameter is needed.
+
+**Why:**
+- Self-reported completion contradicts design doc §8.5 ("Data, not opinions").
+- It double-counts: the act of submitting any daily entry already increments the derived percentage. A separate "I'm 80% done" field is data the system already has.
+- It's a routing trap — by appearing as a daily-rhythm parameter it triggers the same evidence/edit/audit flow as a real meter reading, but there's no underlying meter. That mismatch creates audit-log noise.
+
+**Alternatives considered:**
+- Keep it as a daily-cadence parameter but hide it in the UI: rejected — silent removal is cleaner than a hidden parameter that future Claude sessions might re-surface.
+- Move it to monthly_summary cadence: rejected — same circularity at month grain.
+- Compute it server-side and store it in `computed_metrics`: this is the right answer, but it's already implicit in the home page's `done / total` calculation. No additional code needed for v1.
+
+**Foundation doc reference:** Design doc §17 (computed metrics), §8.5 (data, not opinions), §22 (daily logger).
+**Reversibility:** Trivial. Re-add the row to `parameters` in `web/lib/v1/sample-data.ts` if a future requirement actually needs a contributor-entered completion field.
