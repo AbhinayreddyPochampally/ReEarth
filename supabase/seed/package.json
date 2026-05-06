@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "seed:wave1": "tsx wave1.ts"
+    "seed:wave1": "tsx wave1.ts",
+    "upload:bills": "tsx upload-bills.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.104.1",

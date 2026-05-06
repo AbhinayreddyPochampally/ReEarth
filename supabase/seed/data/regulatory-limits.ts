@@ -1,7 +1,7 @@
 // =============================================================================
 // supabase/seed/data/regulatory-limits.ts
 //
-// Regulatory limits seeded for the Wave 1 demo.  Covers parameters that have
+// Regulatory limits seeded for the demo.  Covers parameters that have
 // measurable breach thresholds at factory sites.
 //
 // facility_sap_code = null → limit applies globally (any facility with this

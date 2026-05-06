@@ -1,32 +1,38 @@
 // =============================================================================
-// supabase/seed/wave1.ts — Wave 1 seed script
+// supabase/seed/wave1.ts — seed script (renamed scope, file kept for npm-script
+// compatibility; rebuilt 2026-05-06 for the rescoped 15-facility footprint).
 //
 // Populates the demo Supabase database with:
-//   10 facilities, 43 parameters, 23 personnel (incl. 1 HO user),
-//   parameter assignments, regulatory limits, 3 months of synthetic
-//   submissions, hazardous event chains, and 1 compliance breach.
+//   15 facilities (11 factories + 4 warehouses, no retail), the parameter
+//   catalog, ~30 contributor personnel + 2 HO super-users, parameter
+//   assignments, regulatory limits, 3 months of synthetic submissions,
+//   hazardous event chains, and 1 compliance breach.
 //
 // Run from supabase/seed/:
 //   npm install && npm run seed:wave1
 //
-// Prerequisites: create supabase/seed/.env containing:
-//   SUPABASE_URL=https://<project-ref>.supabase.co
-//   SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+// Prerequisites:
+//   1. Migrations 001 + 002 + 003 + 004 applied (004 makes personnel.facility_id
+//      nullable so HO users can be corporate).
+//   2. supabase/seed/.env contains:
+//        SUPABASE_URL=https://<project-ref>.supabase.co
+//        SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 //
 // On re-run: truncates all seed-managed tables in FK-safe order, then
-// re-inserts everything fresh.  If the app has been used and audit_log has
+// re-inserts everything fresh. If the app has been used and audit_log has
 // entries, you must first run `TRUNCATE audit_log CASCADE;` in the Supabase
 // SQL Editor (audit_log blocks personnel deletion via FK).
 //
-// Output: supabase/seed/output/pins.csv  (git-ignored) — plaintext PINs for
-// all facilities and personnel for use during the demo.
+// Outputs (both git-ignored):
+//   supabase/seed/output/pins.csv          — plaintext facility PINs
+//   supabase/seed/output/ho-passwords.csv  — plaintext HO super-user passwords
 // =============================================================================
 
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { FACILITIES } from './data/facilities';
+import { FACILITIES, HO_USERS } from './data/facilities';
 import { PARAMETERS } from './data/parameters';
 import { REGULATORY_LIMITS } from './data/regulatory-limits';
 import { hashPin } from './lib/hash-pin';
@@ -65,9 +71,10 @@ function backdatedTs(start: string, end: string, seed: number): string {
 
 function submissionStatus(monthIdx: number, seed: number): 'approved' | 'pending' | 'sent_back' {
   const r = pr(seed);
-  if (monthIdx === 0) return 'approved';           // Feb: all approved
-  if (monthIdx === 1) return r < 0.80 ? 'approved' : 'sent_back'; // Mar: mostly approved
-  return r < 0.35 ? 'approved' : 'pending';        // Apr: mostly pending
+  if (monthIdx === 0) return 'approved';                                // Feb: all approved
+  if (monthIdx === 1) return r < 0.80 ? 'approved' : 'sent_back';       // Mar: mostly approved, some sent back
+  if (monthIdx === 2) return r < 0.55 ? 'approved' : 'pending';         // Apr: half approved, half waiting
+  return r < 0.35 ? 'approved' : 'pending';                             // May tail: mostly pending (in-flight)
 }
 
 async function clearTable(table: string, filterCol = 'created_at'): Promise<void> {
@@ -106,32 +113,36 @@ async function insertBatch<T extends Record<string, unknown>>(
 
 // ── Static config ──────────────────────────────────────────────────────────
 
+// Submission periods seeded — Feb through current month (May 2026).
+// Adding May 1-6 as a partial-month tail so the demo's "today's daily log"
+// surface lands in the in-progress state on a fresh login. Storage impact:
+// ~30 facilities × ~10 params × ~6 days = ~1,800 extra rows × ~250 B = ~450 KB.
+// Well within the Supabase free tier 500 MB cap.
 const PERIODS = [
   { idx: 0, start: '2026-02-01', end: '2026-02-28' },
   { idx: 1, start: '2026-03-01', end: '2026-03-31' },
   { idx: 2, start: '2026-04-01', end: '2026-04-30' },
+  { idx: 3, start: '2026-05-01', end: '2026-05-06' }, // current-month tail
 ] as const;
 
-// Maps haz category name → parameter code.
-// Built from each haz parameter's conditional_predicate, which is the canonical
-// source for category names (avoids string-munging from param codes).
-const HAZ_CAT_TO_PARAM_CODE = new Map<string, string>(
-  PARAMETERS
-    .filter(p => p.category === 'waste_haz' && p.conditional_predicate?.active_haz_categories_contains)
-    .map(p => [
-      p.conditional_predicate!.active_haz_categories_contains as string,
-      p.code,
-    ]),
-);
+// Maps haz parameter code → category short-name (derived from the code).
+// Used only to build manifest numbers and synthetic disposal links. Post-2026-
+// 05-06 rescope: hazardous parameters are no longer gated by an
+// active_haz_categories list; all factories see all categories. The "category"
+// here is just the parameter's identity for the disposal-batch link.
+function hazCategoryFromCode(code: string): string {
+  // 'haz_used_oil_kg' -> 'used_oil' ; 'haz_e_waste_regulated_kg' -> 'e_waste_regulated'
+  return code.replace(/^haz_/, '').replace(/_kg$/, '');
+}
 
 // ── Main ───────────────────────────────────────────────────────────────────
 async function main(): Promise<void> {
-  console.log('=== Wave 1 seed ===\n');
+  console.log('=== ReEarth seed (15-facility post-rescope footprint) ===\n');
 
   // ─────────────────────────────────────────────────────────────────────────
   // [1/9] Clear existing data (children before parents, reverse FK order)
   // ─────────────────────────────────────────────────────────────────────────
-  console.log('[1/9] Clearing existing seed data...');
+  console.log('[1/10] Clearing existing seed data...');
   await clearTable('compliance_breaches', 'detected_at');
   await clearTable('hazardous_events');
   await clearTable('discussion_messages');
@@ -165,7 +176,8 @@ async function main(): Promise<void> {
         state: f.state,
         pincode: f.pincode,
         address: f.address,
-        size_sqft: f.size_sqft ?? null,
+        // size_sqft removed in 2026-05-06 rescope; floor area is a master_data
+        // parameter now (see parameters.ts), edited via Master Data UI.
         flags: f.flags,
         pin_hash: pinHash,
         pin_active_from: now,
@@ -205,9 +217,9 @@ async function main(): Promise<void> {
   console.log(`      ✓ ${dbParams.length} parameters\n`);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // [4/9] Personnel
+  // [4/10] Contributor personnel (per-facility, role='contributor')
   // ─────────────────────────────────────────────────────────────────────────
-  console.log('[4/9] Inserting personnel...');
+  console.log('[4/10] Inserting contributor personnel...');
   const personnelRows = FACILITIES.flatMap(f => {
     const facilityId = facilityIdBySap.get(f.sap_code)!;
     return f.personnel.map(p => ({
@@ -219,14 +231,39 @@ async function main(): Promise<void> {
   });
   const dbPersonnel = await insertBatch('personnel', personnelRows);
 
-  // facilityId → personName → personId
+  // facilityId → personName → personId (contributors only)
   const personnelMap = new Map<string, Map<string, string>>();
   for (const row of dbPersonnel as Record<string, unknown>[]) {
     const fid = row.facility_id as string;
     if (!personnelMap.has(fid)) personnelMap.set(fid, new Map());
     personnelMap.get(fid)!.set(row.name as string, row.id as string);
   }
-  console.log(`      ✓ ${dbPersonnel.length} personnel\n`);
+  console.log(`      ✓ ${dbPersonnel.length} contributors\n`);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // [4b/10] HO super-users — facility_id is NULL (corporate role).
+  // Per inconsistency-E resolution: at least 2 super-users so each can reset
+  // the other's password. Plaintext passwords written to ho-passwords.csv.
+  // ─────────────────────────────────────────────────────────────────────────
+  console.log('[4b/10] Inserting HO super-users...');
+  const hoPasswordsLines: string[] = ['name,email,password,is_super_user'];
+  const hoRows = await Promise.all(
+    HO_USERS.map(async (u) => {
+      const passwordHash = await hashPin(u.password); // bcryptjs is suitable for both PINs and passwords
+      hoPasswordsLines.push(`"${u.name}",${u.email},"${u.password}",${u.is_super_user}`);
+      return {
+        facility_id: null,
+        name: u.name,
+        designation: u.designation,
+        email: u.email,
+        password_hash: passwordHash,
+        is_super_user: u.is_super_user,
+        role: 'ho',
+      };
+    }),
+  );
+  const dbHO = await insertBatch('personnel', hoRows);
+  console.log(`      ✓ ${dbHO.length} HO users\n`);
 
   // ─────────────────────────────────────────────────────────────────────────
   // [5/9] Parameter assignments
@@ -343,10 +380,10 @@ async function main(): Promise<void> {
         const submittedByName = contributors[ci % contributors.length].name;
         const eventType: SubMeta['eventType'] = isHazGen ? 'hazardous_generation' : 'standard';
 
-        // Extract haz category from predicate (canonical source — avoids string munging)
-        const hazCategory = isHazGen
-          ? (param.conditional_predicate?.active_haz_categories_contains as string | undefined)
-          : undefined;
+        // Post-2026-05-06: hazardous parameters no longer carry an
+        // active_haz_categories_contains predicate. Derive the category short-name
+        // directly from the parameter code for FIFO ledger linking.
+        const hazCategory = isHazGen ? hazCategoryFromCode(paramCode) : undefined;
 
         submissionRows.push({
           facility_id: facilityId,
@@ -371,16 +408,20 @@ async function main(): Promise<void> {
       }
     }
 
-    // Hazardous disposal: March 2026 — dispose ~82% of February generation
+    // Hazardous disposal: March 2026 — dispose ~82% of February generation.
+    // Post-2026-05-06: iterate over the haz parameters that are actually
+    // assigned to this factory rather than relying on a per-facility
+    // active_haz_categories list (which no longer exists).
     if (facility.type === 'factory') {
-      const hazCats = (facility.flags.active_haz_categories as string[]) ?? [];
-      for (const hazCat of hazCats) {
-        const hazParamCode = HAZ_CAT_TO_PARAM_CODE.get(hazCat);
-        if (!hazParamCode) continue;
+      const assignedHazParams = PARAMETERS.filter(
+        p => p.category === 'waste_haz' && assigned.has(paramIdByCode.get(p.code) ?? '__'),
+      );
+      for (const param of assignedHazParams) {
+        const hazParamCode = param.code;
         const hazParamId = paramIdByCode.get(hazParamCode);
-        if (!hazParamId || !assigned.has(hazParamId)) continue;
+        if (!hazParamId) continue;
+        const hazCat = hazCategoryFromCode(hazParamCode);
 
-        const param = paramByCode.get(hazParamCode)!;
         const febQty = syntheticValue(facility.sap_code, hazParamCode, 'waste_haz', 0);
         const disposalQty = Math.max(0.1, Math.round(febQty * 0.82 * 10) / 10);
 
@@ -480,11 +521,12 @@ async function main(): Promise<void> {
   console.log(`      ✓ ${hazEventRows.length} hazardous events\n`);
 
   // ─────────────────────────────────────────────────────────────────────────
-  // [9/9] Compliance breach
-  //   Factory-001, boiler emissions, March 2026: 145 mg/Nm³ vs limit of 100.
-  //   Seeded as approved (historical record) with severity=critical.
+  // [9/10] Compliance breach
+  //   Factory-Bengaluru (FAC00001), boiler emissions, March 2026:
+  //   145 mg/Nm³ vs CPCB limit of 100. Seeded as approved (historical record)
+  //   with severity=critical.
   // ─────────────────────────────────────────────────────────────────────────
-  console.log('[9/9] Inserting compliance breach...');
+  console.log('[9/10] Inserting compliance breach...');
   const fac001Id = facilityIdBySap.get('FAC00001')!;
   const breachSub = subLookup.get(`${fac001Id}|stack_emissions_boiler_mgnm3|2026-03-01|standard`);
   const boilerLimitId = limitIdByParamCode.get('stack_emissions_boiler_mgnm3');
@@ -507,26 +549,30 @@ async function main(): Promise<void> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Write pins.csv
+  // [10/10] Write credential CSVs (both git-ignored)
   // ─────────────────────────────────────────────────────────────────────────
+  console.log('[10/10] Writing credential CSVs...');
   const outputDir = join(__dirname, 'output');
   mkdirSync(outputDir, { recursive: true });
   writeFileSync(join(outputDir, 'pins.csv'), pinsLines.join('\n') + '\n', 'utf8');
-  console.log('Wrote supabase/seed/output/pins.csv (git-ignored — your login cheat sheet)\n');
+  writeFileSync(join(outputDir, 'ho-passwords.csv'), hoPasswordsLines.join('\n') + '\n', 'utf8');
+  console.log('      ✓ pins.csv + ho-passwords.csv\n');
 
   // ─────────────────────────────────────────────────────────────────────────
   // Summary
   // ─────────────────────────────────────────────────────────────────────────
   console.log('=== Done ===');
-  console.log(`Facilities:   ${dbFacilities.length}`);
-  console.log(`Parameters:   ${dbParams.length}`);
-  console.log(`Personnel:    ${dbPersonnel.length}`);
-  console.log(`Assignments:  ${assignmentRows.length}`);
-  console.log(`Reg limits:   ${dbLimits.length}`);
-  console.log(`Submissions:  ${dbSubmissions.length}`);
-  console.log(`Haz events:   ${hazEventRows.length}`);
-  console.log(`Breaches:     1`);
-  console.log('\nNext: open supabase/seed/output/pins.csv to see all login credentials.');
+  console.log(`Facilities:    ${dbFacilities.length}`);
+  console.log(`Parameters:    ${dbParams.length}`);
+  console.log(`Contributors:  ${dbPersonnel.length}`);
+  console.log(`HO super-users:${dbHO.length}`);
+  console.log(`Assignments:   ${assignmentRows.length}`);
+  console.log(`Reg limits:    ${dbLimits.length}`);
+  console.log(`Submissions:   ${dbSubmissions.length}`);
+  console.log(`Haz events:    ${hazEventRows.length}`);
+  console.log(`Breaches:      1`);
+  console.log('\nNext: open supabase/seed/output/pins.csv (contributors)');
+  console.log('      and supabase/seed/output/ho-passwords.csv (HO).');
 }
 
 main().catch(err => {
