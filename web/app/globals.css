@@ -1,26 +1,175 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* WCAG 2.3.3 — respect prefers-reduced-motion for users who set it.
+   Disable hover-scale, transitions, and animations. Per a11y-review.md item G. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
+:root {
+  --bg: #faf8f3;
+  --bg-elev: #ffffff;
+  --bg-subtle: #f4f1ea;
+  --bg-hover: #efece5;
+  --ink: #0e1f1a;
+  --ink-2: #294038;
+  --muted: #6b7770;
+  --muted-2: #9aa39d;
+  --line: #e6e2d8;
+  --line-strong: #d4cfc1;
+  --primary: #1f3a2e;
+  --primary-ink: #ffffff;
+  --accent: #5fbf8a;
+  --accent-ink: #0e1f1a;
+  --accent-soft: #e6f4ec;
+  --warn: #d4972c;
+  --warn-soft: #fbf1dd;
+  --danger: #b14a3a;
+  --danger-soft: #fbe9e4;
+  --info: #4a7fb1;
+  --info-soft: #e4eef7;
+  --good: #4f9c6e;
+  --good-soft: #e4f1ea;
+  --conf-hi: #4f9c6e;
+  --conf-mid: #d4972c;
+  --conf-lo: #b14a3a;
+  --shadow-1: 0 1px 2px rgb(14 31 26 / 4%), 0 0 0 1px rgb(14 31 26 / 4%);
+  --shadow-2: 0 4px 12px rgb(14 31 26 / 8%), 0 0 0 1px rgb(14 31 26 / 5%);
+  --shadow-3: 0 12px 32px rgb(14 31 26 / 12%), 0 0 0 1px rgb(14 31 26 / 6%);
+  --shadow-fab: 0 4px 16px rgb(14 31 26 / 18%), 0 1px 2px rgb(14 31 26 / 10%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.t-h1 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.t-h2 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.t-h3 {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+.t-h4 {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.t-body {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.t-body-sm {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.t-caption {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.t-tiny {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.t-eyebrow {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.t-mono {
+  font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.t-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.re-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-1);
+}
+
+.re-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-elev);
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+  padding: 8px 10px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.re-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(95 191 138 / 18%);
+}
+
+.re-scrollbar {
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
 }
