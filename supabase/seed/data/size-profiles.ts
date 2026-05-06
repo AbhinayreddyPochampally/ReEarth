@@ -25,6 +25,21 @@
 // [min, max] for a monthly submission value
 export type ValueRange = [number, number];
 
+// Fallback ranges by parameter category. Used when a facility has no entry in
+// PROFILES (the 12 facilities not individually calibrated yet) and the
+// synthetic-values generator needs a sensible default. Phase 2 task: tighten
+// per-facility profiles for the remaining 12. Until then defaults give
+// realistic-shaped numbers without requiring per-facility tuning.
+export const CATEGORY_DEFAULTS: Record<string, ValueRange> = {
+  energy:        [50, 200],
+  water:         [10, 80],
+  waste_general: [20, 100],
+  waste_haz:     [5, 30],
+  air:           [30, 90],
+  operational:   [100, 500],
+  master_data:   [0, 0],
+};
+
 export interface FacilityProfile {
   // Energy
   grid_electricity_kwh?: ValueRange;
