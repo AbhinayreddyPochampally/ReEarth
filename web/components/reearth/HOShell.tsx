@@ -23,7 +23,7 @@ const nav = [
   { href: '/ho', label: 'Dashboards', key: 'dashboards', icon: BarChart },
   { href: '/ho/inbox', label: 'Bill Inbox', key: 'inbox', icon: Inbox },
   { href: '/ho/alerts', label: 'Alerts', key: 'alerts', icon: Bell },
-  { href: '/ho/facilities/fac-hosur', label: 'Facilities', key: 'facilities', icon: Building },
+  { href: '/ho/facilities', label: 'Facilities', key: 'facilities', icon: Building },
   { href: '/ho/explorer', label: 'Data Explorer', key: 'explorer', icon: Sparkle },
   { href: '/ho/master', label: 'Master Data', key: 'master', icon: Database },
 ];
