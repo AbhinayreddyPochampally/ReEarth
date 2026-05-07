@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Upload } from '@/components/reearth/Icons';
+import { ChevronRight, Upload } from '@/components/reearth/Icons';
 import { ButtonLink, Card, Chip, EmptyState } from '@/components/reearth/ui';
 import { requireSession } from '@/lib/auth/session';
-import { bills } from '@/lib/v1/sample-data';
+import { bills, resolveV1FacilityId } from '@/lib/v1/sample-data';
 import { getBillStateOverride, listBillsWithLiveStatus } from '@/lib/v1/bill-state-store';
 import type { Bill, BillStatus } from '@/lib/v1/types';
 import MyBillsTabs from './MyBillsTabs';
@@ -36,8 +36,11 @@ function summaryLine(bill: Bill): string {
 
 export default async function MyBillsPage(): Promise<React.ReactElement> {
   const session = await requireSession();
+  // SAP-code bridge — ContributorShell handles back navigation globally now,
+  // so the in-page back chevron has been retired. Bottom nav is the way home.
+  const v1FacilityId = resolveV1FacilityId({ sapCode: session.sap_code, facilityId: session.facility_id });
   const all = listBillsWithLiveStatus(bills).filter(
-    bill => bill.facilityId === session.facility_id,
+    bill => bill.facilityId === v1FacilityId,
   );
   const pending = all.filter(b => b.status === 'ready_for_review');
   const sentBack = all.filter(b => b.status === 'sent_back');
@@ -45,9 +48,6 @@ export default async function MyBillsPage(): Promise<React.ReactElement> {
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-2">
-        <ButtonLink className="h-9 w-9 px-0" href="/contributor" variant="outline">
-          <ChevronLeft size={16} />
-        </ButtonLink>
         <div className="flex-1">
           <div className="t-h2">My bills</div>
           <div className="t-caption mt-1">Last 30 days · {all.length} uploads</div>

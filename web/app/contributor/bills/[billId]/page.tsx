@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
-import { ChevronLeft, MessageCircle } from '@/components/reearth/Icons';
-import { ButtonLink, Card, Chip } from '@/components/reearth/ui';
+import { MessageCircle } from '@/components/reearth/Icons';
+import { Card, Chip } from '@/components/reearth/ui';
 import { requireSession } from '@/lib/auth/session';
-import { bills } from '@/lib/v1/sample-data';
+import { bills, resolveV1FacilityId } from '@/lib/v1/sample-data';
 import { getBillStateOverride, getUploadedBills } from '@/lib/v1/bill-state-store';
 import ReuploadForm from './ReuploadForm';
 
@@ -22,28 +22,27 @@ export default async function ContributorBillPage({
 
   const allBills = [...bills, ...getUploadedBills()];
   const bill = allBills.find(b => b.id === billId);
-  if (!bill || bill.facilityId !== session.facility_id) notFound();
+  // SAP-code bridge: bill.facilityId uses v1 string ids; session.facility_id is
+  // a Supabase UUID on live deploy. Compare against the resolved v1 id.
+  const v1FacilityId = resolveV1FacilityId({ sapCode: session.sap_code, facilityId: session.facility_id });
+  if (!bill || bill.facilityId !== v1FacilityId) notFound();
 
   const override = getBillStateOverride(bill.id);
   const status = override?.status ?? bill.status;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-2">
-        <ButtonLink className="h-9 w-9 px-0" href="/contributor/bills" variant="outline">
-          <ChevronLeft size={16} />
-        </ButtonLink>
-        <div>
-          <div className="t-h3">
-            {bill.vendor} · {bill.period}
-          </div>
-          <div className="t-caption mt-0.5">
-            {status === 'sent_back'
-              ? 'HO needs you to re-upload'
-              : status === 'approved'
-                ? 'Approved by HO'
-                : 'Waiting on HO'}
-          </div>
+      {/* Back is handled globally by ContributorShell on non-root paths. */}
+      <div>
+        <div className="t-h3">
+          {bill.vendor} · {bill.period}
+        </div>
+        <div className="t-caption mt-0.5">
+          {status === 'sent_back'
+            ? 'HO needs you to re-upload'
+            : status === 'approved'
+              ? 'Approved by HO'
+              : 'Waiting on HO'}
         </div>
       </div>
 

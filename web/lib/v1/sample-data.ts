@@ -247,6 +247,42 @@ export function getFacility(facilityId: string): Facility {
   return facilities.find(facility => facility.id === facilityId) ?? facilities[0]!;
 }
 
+// Bridge between live Supabase sessions (UUID facility_id, SAP code carried as
+// session.sap_code) and the in-memory v1 sample-data (string id like
+// 'fac-bengaluru', sap_code like 'FAC00001').
+//
+// On live deploy, session.facility_id is a UUID that won't match any v1 id, so
+// every `submissions.filter(s => s.facilityId === session.facility_id)` returned
+// empty and the contributor screens looked broken. Lookups by sap_code first,
+// then by v1 id, then fall back to the first facility so the screens still
+// render *something* instead of crashing.
+export function resolveV1Facility({
+  sapCode,
+  facilityId,
+}: {
+  sapCode?: string | null;
+  facilityId?: string | null;
+}): Facility {
+  if (sapCode) {
+    const bySap = facilities.find(facility => facility.sapCode === sapCode);
+    if (bySap) return bySap;
+  }
+  if (facilityId) {
+    const byId = facilities.find(facility => facility.id === facilityId);
+    if (byId) return byId;
+  }
+  return facilities[0]!;
+}
+
+// Convenience: returns the v1 facility id (string) for use as a filter key
+// against v1 in-memory arrays. Always pass session.sap_code first.
+export function resolveV1FacilityId(args: {
+  sapCode?: string | null;
+  facilityId?: string | null;
+}): string {
+  return resolveV1Facility(args).id;
+}
+
 export function getPersonName(personId: string): string {
   return personnel.find(person => person.id === personId)?.name ?? 'System';
 }

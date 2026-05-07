@@ -1,7 +1,5 @@
-import { ChevronLeft } from '@/components/reearth/Icons';
-import { ButtonLink } from '@/components/reearth/ui';
 import { requireSession } from '@/lib/auth/session';
-import { getFacility } from '@/lib/v1/sample-data';
+import { resolveV1Facility } from '@/lib/v1/sample-data';
 import MonthlySummaryForm from './MonthlySummaryForm';
 
 export const metadata = { title: 'Monthly summary - ReEarth' };
@@ -16,7 +14,9 @@ const PREVIOUS_MONTH_LABEL = PREVIOUS_MONTH.toLocaleDateString('en-IN', { month:
 
 export default async function MonthlySummaryPage(): Promise<React.ReactElement> {
   const session = await requireSession();
-  const facility = getFacility(session.facility_id!);
+  // SAP-code bridge: live session.facility_id is a UUID and won't match v1
+  // sample-data string ids — resolve through SAP code first.
+  const facility = resolveV1Facility({ sapCode: session.sap_code, facilityId: session.facility_id });
 
   const isFactory = facility.kind === 'factory';
 
@@ -36,14 +36,10 @@ export default async function MonthlySummaryPage(): Promise<React.ReactElement> 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-2">
-        <ButtonLink className="h-9 w-9 px-0" href="/contributor" variant="outline">
-          <ChevronLeft size={16} />
-        </ButtonLink>
-        <div>
-          <div className="t-h2">{PREVIOUS_MONTH_LABEL} summary</div>
-          <div className="t-caption mt-0.5">Day 1 of {TODAY.toLocaleDateString('en-IN', { month: 'long' })} · due now</div>
-        </div>
+      {/* Back is handled globally by ContributorShell on non-root paths. */}
+      <div>
+        <div className="t-h2">{PREVIOUS_MONTH_LABEL} summary</div>
+        <div className="t-caption mt-0.5">Day 1 of {TODAY.toLocaleDateString('en-IN', { month: 'long' })} · due now</div>
       </div>
 
       <MonthlySummaryForm cards={cards} period={PREVIOUS_MONTH.toISOString().slice(0, 7)} />

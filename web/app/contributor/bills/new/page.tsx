@@ -1,5 +1,3 @@
-import { ChevronLeft } from '@/components/reearth/Icons';
-import { ButtonLink } from '@/components/reearth/ui';
 import { requireSession } from '@/lib/auth/session';
 import UploadBillForm from './UploadBillForm';
 
@@ -18,14 +16,10 @@ export default async function UploadBillPage(): Promise<React.ReactElement> {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-2">
-        <ButtonLink className="h-9 w-9 px-0" href="/contributor/bills" variant="outline">
-          <ChevronLeft size={16} />
-        </ButtonLink>
-        <div>
-          <div className="t-h2">Upload bills</div>
-          <div className="t-caption mt-1">Drop multiple at once · PDF or JPG</div>
-        </div>
+      {/* Back is handled globally by ContributorShell on non-root paths. */}
+      <div>
+        <div className="t-h2">Upload bills</div>
+        <div className="t-caption mt-1">Drop multiple at once · PDF or JPG</div>
       </div>
 
       <UploadBillForm />

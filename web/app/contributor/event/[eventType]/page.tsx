@@ -1,4 +1,3 @@
-import { ChevronLeft } from '@/components/reearth/Icons';
 import { ButtonLink } from '@/components/reearth/ui';
 import { requireSession } from '@/lib/auth/session';
 import EventForm from './EventForm';
@@ -51,14 +50,10 @@ export default async function EventFormPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-2">
-        <ButtonLink className="h-9 w-9 px-0" href="/contributor/event" variant="outline">
-          <ChevronLeft size={16} />
-        </ButtonLink>
-        <div>
-          <div className="t-h3">{meta.emoji} {meta.title}</div>
-          <div className="t-caption mt-0.5">Photo first · OCR will fill the fields</div>
-        </div>
+      {/* Back is handled globally by ContributorShell on non-root paths. */}
+      <div>
+        <div className="t-h3">{meta.emoji} {meta.title}</div>
+        <div className="t-caption mt-0.5">Photo first · OCR will fill the fields</div>
       </div>
 
       <EventForm eventType={eventType} meta={meta} />

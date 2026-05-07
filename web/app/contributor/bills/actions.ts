@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireSession } from '@/lib/auth/session';
 import { logAuditEvent } from '@/lib/db/audit';
 import { addUploadedBill, setBillState } from '@/lib/v1/bill-state-store';
+import { resolveV1FacilityId } from '@/lib/v1/sample-data';
 import { runOCR } from '@/lib/ai/ocr';
 import type { Bill, BillKind } from '@/lib/v1/types';
 
@@ -49,9 +50,12 @@ export async function uploadBillAction(formData: FormData): Promise<UploadResult
   const billDraft: Pick<Bill, 'id' | 'kind' | 'vendor'> = { id: billId, kind: kind as BillKind, vendor };
   const ocr = await runOCR(billDraft, `phase2-stub:${filename || 'no-file'}`);
 
+  // SAP-code bridge: store the v1 facility id on the bill so it round-trips
+  // through the in-memory list filtered by the contributor bills page.
+  const v1FacilityId = resolveV1FacilityId({ sapCode: session.sap_code, facilityId: session.facility_id });
   const bill: Bill = {
     id: billId,
-    facilityId: session.facility_id,
+    facilityId: v1FacilityId,
     kind: kind as BillKind,
     vendor,
     period,

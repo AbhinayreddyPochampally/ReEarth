@@ -1,6 +1,4 @@
 import { redirect } from 'next/navigation';
-import { ChevronLeft } from '@/components/reearth/Icons';
-import { ButtonLink } from '@/components/reearth/ui';
 import { getParameter, parameters } from '@/lib/v1/sample-data';
 import { NumericEntryClient } from './NumericEntryClient';
 
@@ -23,14 +21,10 @@ export default async function NumericEntryPage({
 
   return (
     <div className="flex min-h-[calc(100vh-180px)] flex-col space-y-4">
-      <div className="flex items-start gap-2">
-        <ButtonLink className="h-9 w-9 px-0" href="/contributor/daily" variant="outline">
-          <ChevronLeft size={16} />
-        </ButtonLink>
-        <div>
-          <div className="t-h3">{parameter.label}</div>
-          <div className="t-caption">{parameter.category} - daily reading</div>
-        </div>
+      {/* Back is handled globally by ContributorShell on non-root paths. */}
+      <div>
+        <div className="t-h3">{parameter.label}</div>
+        <div className="t-caption">{parameter.category} - daily reading</div>
       </div>
 
       <NumericEntryClient initialValue={displayValue} parameter={parameter} />
