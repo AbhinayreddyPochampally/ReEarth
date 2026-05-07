@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireSession } from '@/lib/auth/session';
 import { logAuditEvent } from '@/lib/db/audit';
 import { addUploadedBill } from '@/lib/v1/bill-state-store';
+import { resolveV1FacilityId } from '@/lib/v1/sample-data';
 import type { Bill, BillKind } from '@/lib/v1/types';
 
 export type EventResult = { ok: true; eventId: string } | { ok: false; error: string };
@@ -50,9 +51,12 @@ export async function logEventAction(formData: FormData): Promise<EventResult> {
   const eventId = `ev-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const today = new Date().toISOString().slice(0, 10);
 
+  // SAP-code bridge so the new bill appears in the contributor's My-Bills list
+  // (which filters the in-memory v1 array by string id, not Supabase UUID).
+  const v1FacilityId = resolveV1FacilityId({ sapCode: session.sap_code, facilityId: session.facility_id });
   const bill: Bill = {
     id: eventId,
-    facilityId: session.facility_id,
+    facilityId: v1FacilityId,
     kind: billKind,
     vendor,
     period: today,
