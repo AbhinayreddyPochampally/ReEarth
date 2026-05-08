@@ -70,11 +70,15 @@ jobs:
 
       - name: Smoke test
         run: |
+          # Hit /login/ho directly: it's a terminal page (no redirect), so a healthy
+          # deploy returns 200. Probing / returns 307 because web/app/page.tsx
+          # redirects to /login — which made the previous "$STATUS != 200" check
+          # falsely fail every deploy that included the root-redirect change.
           sleep 45
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://reearth.azurewebsites.net)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://reearth.azurewebsites.net/login/ho)
           echo "Response: $STATUS"
           if [ "$STATUS" != "200" ]; then
-            echo "Smoke test failed: expected 200, got $STATUS"
+            echo "Smoke test failed: expected 200 from /login/ho, got $STATUS"
             exit 1
           fi
           echo "Smoke test passed"
